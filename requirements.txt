@@ -1,0 +1,4 @@
+numpy==1.24.2
+keras==2.12.0
+mealpy==
+tensorflow==
