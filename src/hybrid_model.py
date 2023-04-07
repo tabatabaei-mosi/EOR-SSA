@@ -3,6 +3,7 @@ from keras.layers import Dense
 from keras.models import Sequential
 from mealpy.swarm_based import SSA
 from tensorflow.keras.losses import CategoricalCrossentropy
+from utils import path_check
 
 
 class SSA_ANN:
@@ -15,13 +16,13 @@ class SSA_ANN:
         self,
         dataset,
         n_hidden_nodes, activation_list,
-        epoch, pop_size, ST, Producers, Scrounger
+        epoch, pop_size, ST, Producers, Scroungers
     ):
         """
         This is the constructor of the class.
 
         Arguments:
-            dataset {dict} -- A dict with following keys "x_train", "y_train", "x_test", "y_text" (respectively). 
+            dataset {dict} -- A dict with following keys "x_train", "y_train", "x_test", "y_test" (respectively). 
             
             n_hidden_nodes {list} -- number of hidden nodes in each hidden layer (respectively).
             Note that the length of this list must be equal to the number of hidden layers.
@@ -40,18 +41,18 @@ class SSA_ANN:
             
             Producers {float} -- The number of producers in population.
             
-            Scrounger {float} -- The number of scrounger in population.
+            Scroungers {float} -- The number of scroungers in population.
         """
         
         # initializing the class attributes.
-        self.X_train, self.y_train, self.X_test, self.y_test = dataset["x_train"], dataset["y_train"], dataset["x_test"], dataset["y_text"]
+        self.X_train, self.y_train, self.X_test, self.y_test = dataset["x_train"], dataset["y_train"], dataset["x_test"], dataset["y_test"]
         self.n_hidden_nodes = n_hidden_nodes
         self.activation = activation_list
         self.epoch = epoch
         self.pop_size = pop_size
         self.ST = ST
         self.PD = Producers
-        self.SD = Scrounger
+        self.SD = Scroungers
         
         # number of input and output nodes according to the dataset.
         self.n_inputs = self.X_train.shape[1]
@@ -60,6 +61,13 @@ class SSA_ANN:
         # initializing the neural network model and the problem parameters.
         self.model, self.problem_size, self.n_dims, self.problem = None, None, None, None
         self.optimizer, self.solution, self.best_fit = None, None, None
+        
+        # initializing the paths for saving the results.
+        self.log_path = path_check(file_path="Results", path_return=True)
+        self.charts_path = path_check(file_path="Results/Charts", path_return=True)
+        
+        # initializing the model information (for saving the results in a proper way)
+        self.model_info = f"E={self.epoch},PS={self.pop_size},SSA=[{self.PD, self.SD, self.ST}],ANN={self.n_hidden_nodes}"
         
 
     def create_model(self):
@@ -99,7 +107,7 @@ class SSA_ANN:
             "lb": [-1, ] * self.n_dims,
             "ub": [1, ] * self.n_dims,
             "log_to": "file",
-            "log_file": f"Results/#{self.epoch}#{self.pop_size}#[{self.PD, self.SD, self.ST}]#{self.n_hidden_nodes}.log",
+            "log_file": f"{self.log_path}/{self.model_info}.log",
             "save_population": False,
         }
 
@@ -180,7 +188,7 @@ class SSA_ANN:
         
         # Save the global best fitness chart to a file
         self.optimizer.history.save_global_best_fitness_chart(
-                filename=f"Results/charts/#{self.epoch} #{self.pop_size} #{self.n_hidden_nodes} #[{self.PD, self.SD, self.ST}]_gbf"
+                filename=f"{self.charts_path}/{self.model_info}_gbf"
         )
 
         # Get the global best fitness history
@@ -218,7 +226,7 @@ class SSA_ANN:
         return loss
 
 
-# TODO: use a function which check if "Results" and "Results/charts" directory not aviable, create the one.
+# TODO: try-except block for path (to avoid error)
 # TODO: write a test for this class.
 if __name__=="__main__":
     pass       
